@@ -1,0 +1,343 @@
+<!-- Styles -->
+<style>
+#chartdiv {
+  width: 100%;
+  height: 500px;
+}
+</style>
+
+<!-- Resources -->
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+<!-- Chart code -->
+<script>
+am5.ready(function() {
+
+// Data
+var allData = {
+  "2015": {
+    "馬來西亞": 458401,
+    "新加坡": 354767,
+    "印尼": 181734,
+    "菲律賓": 139758,
+    "泰國": 121337,
+    "越南": 143930
+  },
+  "2016": {
+    "馬來西亞": 500496,
+    "新加坡": 371663,
+    "印尼": 192053,
+    "菲律賓": 171816,
+    "泰國": 193200,
+    "越南": 194323
+  },
+  "2017": {
+    "馬來西亞": 552620,
+    "新加坡": 384833,
+    "印尼": 201983,
+    "菲律賓": 209395,
+    "泰國": 289801,
+    "越南": 309617
+  },
+  "2018": {
+    "馬來西亞": 548947,
+    "新加坡": 389639,
+    "印尼": 215891,
+    "菲律賓": 420302,
+    "泰國": 312090,
+    "越南": 429049
+  },
+  "2019": {
+    "馬來西亞": 560099,
+    "新加坡": 421821,
+    "印尼": 234968,
+    "菲律賓": 510966,
+    "泰國": 410385,
+    "越南": 404896
+  },
+  "2020": {
+    "馬來西亞": 2432,
+    "新加坡": 6640,
+    "印尼": 14818,
+    "菲律賓": 25276,
+    "泰國": 7544,
+    "越南": 24872
+  },
+  "2021": {
+    "馬來西亞": 1678,
+    "新加坡": 2309,
+    "印尼": 14131,
+    "菲律賓": 9502,
+    "泰國": 7534,
+    "越南": 24872
+  },
+  "2022": {
+    "馬來西亞": 60742,
+    "新加坡": 17829,
+    "印尼": 17031,
+    "菲律賓": 26490,
+    "泰國": 137019,
+    "越南": 135356
+  },
+  "2023": {
+    "馬來西亞": 426029,
+    "新加坡": 309411,
+    "印尼": 231455,
+    "菲律賓": 476746,
+    "泰國": 397168,
+    "越南": 370800
+  },
+  "2024": {
+    "馬來西亞": 463216,
+    "新加坡": 400181,
+    "印尼": 231455,
+    "菲律賓": 476746,
+    "泰國": 397168,
+    "越南": 370800
+  }
+};
+
+
+
+// Create root element
+// https://www.amcharts.com/docs/v5/getting-started/#Root_element
+var root = am5.Root.new("chartdiv");
+
+root.numberFormatter.setAll({
+  numberFormat: "#a",
+
+  // Group only into M (millions), and B (billions)
+  bigNumberPrefixes: [
+    { number: 1e6, suffix: "M" },
+    { number: 1e9, suffix: "B" }
+  ],
+
+  // Do not use small number prefixes at all
+  smallNumberPrefixes: []
+});
+
+var stepDuration = 2000;
+
+
+// Set themes
+// https://www.amcharts.com/docs/v5/concepts/themes/
+root.setThemes([am5themes_Animated.new(root)]);
+
+
+// Create chart
+// https://www.amcharts.com/docs/v5/charts/xy-chart/
+var chart = root.container.children.push(am5xy.XYChart.new(root, {
+  panX: true,
+  panY: true,
+  wheelX: "none",
+  wheelY: "none",
+  paddingLeft: 0
+}));
+
+
+// We don't want zoom-out button to appear while animating, so we hide it at all
+chart.zoomOutButton.set("forceHidden", true);
+
+
+// Create axes
+// https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
+var yRenderer = am5xy.AxisRendererY.new(root, {
+  minGridDistance: 20,
+  inversed: true,
+  minorGridEnabled: true
+});
+// hide grid
+yRenderer.grid.template.set("visible", false);
+
+var yAxis = chart.yAxes.push(am5xy.CategoryAxis.new(root, {
+  maxDeviation: 0,
+  categoryField: "network",
+  renderer: yRenderer
+}));
+
+var xAxis = chart.xAxes.push(am5xy.ValueAxis.new(root, {
+  maxDeviation: 0,
+  min: 0,
+  strictMinMax: true,
+  extraMax: 0.1,
+  renderer: am5xy.AxisRendererX.new(root, {})
+}));
+
+xAxis.set("interpolationDuration", stepDuration / 10);
+xAxis.set("interpolationEasing", am5.ease.linear);
+
+
+// Add series
+// https://www.amcharts.com/docs/v5/charts/xy-chart/series/
+var series = chart.series.push(am5xy.ColumnSeries.new(root, {
+  xAxis: xAxis,
+  yAxis: yAxis,
+  valueXField: "value",
+  categoryYField: "network"
+}));
+
+// Rounded corners for columns
+series.columns.template.setAll({ cornerRadiusBR: 5, cornerRadiusTR: 5 });
+
+// Make each column to be of a different color
+series.columns.template.adapters.add("fill", function (fill, target) {
+  return chart.get("colors").getIndex(series.columns.indexOf(target));
+});
+
+series.columns.template.adapters.add("stroke", function (stroke, target) {
+  return chart.get("colors").getIndex(series.columns.indexOf(target));
+});
+
+// Add label bullet
+series.bullets.push(function () {
+  return am5.Bullet.new(root, {
+    locationX: 1,
+    sprite: am5.Label.new(root, {
+      text: "{valueXWorking.formatNumber('#.# a')}",
+      fill: root.interfaceColors.get("alternativeText"),
+      centerX: am5.p100,
+      centerY: am5.p50,
+      populateText: true
+    })
+  });
+});
+
+var label = chart.plotContainer.children.push(am5.Label.new(root, {
+  text: "2002",
+  fontSize: "8em",
+  opacity: 0.2,
+  x: am5.p100,
+  y: am5.p100,
+  centerY: am5.p100,
+  centerX: am5.p100
+}));
+
+// Get series item by category
+function getSeriesItem(category) {
+  for (var i = 0; i < series.dataItems.length; i++) {
+    var dataItem = series.dataItems[i];
+    if (dataItem.get("categoryY") == category) {
+      return dataItem;
+    }
+  }
+}
+
+// Axis sorting
+function sortCategoryAxis() {
+  // sort by value
+  series.dataItems.sort(function (x, y) {
+    return y.get("valueX") - x.get("valueX"); // descending
+    //return x.get("valueX") - y.get("valueX"); // ascending
+  });
+
+  // go through each axis item
+  am5.array.each(yAxis.dataItems, function (dataItem) {
+    // get corresponding series item
+    var seriesDataItem = getSeriesItem(dataItem.get("category"));
+
+    if (seriesDataItem) {
+      // get index of series data item
+      var index = series.dataItems.indexOf(seriesDataItem);
+      // calculate delta position
+      var deltaPosition =
+        (index - dataItem.get("index", 0)) / series.dataItems.length;
+      // set index to be the same as series data item index
+      if (dataItem.get("index") != index) {
+        dataItem.set("index", index);
+        // set deltaPosition instanlty
+        dataItem.set("deltaPosition", -deltaPosition);
+        // animate delta position to 0
+        dataItem.animate({
+          key: "deltaPosition",
+          to: 0,
+          duration: stepDuration / 2,
+          easing: am5.ease.out(am5.ease.cubic)
+        });
+      }
+    }
+  });
+  // sort axis items by index.
+  // This changes the order instantly, but as deltaPosition is set, they keep in the same places and then animate to true positions.
+  yAxis.dataItems.sort(function (x, y) {
+    return x.get("index") - y.get("index");
+  });
+}
+
+var year = 2015;
+
+// update data with values each 1.5 sec
+var interval = setInterval(function () {
+  year++;
+
+  if (year > 2024) {
+    clearInterval(interval);
+    clearInterval(sortInterval);
+  }
+
+  updateData();
+}, stepDuration);
+
+var sortInterval = setInterval(function () {
+  sortCategoryAxis();
+}, 100);
+
+function setInitialData() {
+  var d = allData[year];
+
+  for (var n in d) {
+    series.data.push({ network: n, value: d[n] });
+    yAxis.data.push({ network: n });
+  }
+}
+
+function updateData() {
+  var itemsWithNonZero = 0;
+
+  if (allData[year]) {
+    label.set("text", year.toString());
+
+    am5.array.each(series.dataItems, function (dataItem) {
+      var category = dataItem.get("categoryY");
+      var value = allData[year][category];
+
+      if (value > 0) {
+        itemsWithNonZero++;
+      }
+
+      dataItem.animate({
+        key: "valueX",
+        to: value,
+        duration: stepDuration,
+        easing: am5.ease.linear
+      });
+      dataItem.animate({
+        key: "valueXWorking",
+        to: value,
+        duration: stepDuration,
+        easing: am5.ease.linear
+      });
+    });
+
+    yAxis.zoom(0, itemsWithNonZero / yAxis.dataItems.length);
+  }
+}
+
+setInitialData();
+setTimeout(function () {
+  year++;
+  updateData();
+}, 50);
+
+// Make stuff animate on load
+// https://www.amcharts.com/docs/v5/concepts/animations/
+series.appear(1000);
+chart.appear(1000, 100);
+
+}); // end am5.ready()
+</script>
+
+<!-- HTML -->
+<div id="chartdiv"></div>
+amCharts
